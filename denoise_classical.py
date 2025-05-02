@@ -50,7 +50,7 @@ for p in input_paths:
     paths_out_gaussian.append(p+'_Gaussian_'+str(level_num))
     os.makedirs(p+'_Gaussian_'+str(level_num), exist_ok=True)
     paths_out_median.append(p+'_Median_'+str(level_num))
-    os.makedirs(p+'_Median'+str(level_num), exist_ok=True)
+    os.makedirs(p+'_Median_'+str(level_num), exist_ok=True)
 
 #print(paths_out_gaussian)
 #print(paths_out_median)

@@ -74,7 +74,7 @@ def group_images_by_brightness(dataset, n_clusters=5, show_summary=True):
 
     if show_summary:
         plt.figure(figsize=(8, 4))
-        plt.hist(brightness_values, bins=30, color='gray', edgecolor='black')
+        plt.hist(brightness_values, bins=30, color='gray')
         plt.title("Brightness Distribution")
         plt.xlabel("Average Brightness")
         plt.ylabel("Number of Images")

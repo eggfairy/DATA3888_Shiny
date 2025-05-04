@@ -50,7 +50,7 @@ from collections import Counter
             
 #     return augmented_images, augmented_labels
 
-#If need to do comparison between model
+#If need to do comparison between models
 #def set_augmentation_seed(seed):
 #    random.seed(seed)
 #    np.random.seed(seed)

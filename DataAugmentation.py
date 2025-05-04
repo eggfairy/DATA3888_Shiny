@@ -50,6 +50,12 @@ from collections import Counter
             
 #     return augmented_images, augmented_labels
 
+#If need to do comparison between model
+#def set_augmentation_seed(seed):
+#    random.seed(seed)
+#    np.random.seed(seed)
+#    A.set_seed(seed)
+
 def get_augmentation_pipeline():
     return A.Compose([
         A.RandomRotate90(p=0.5),

@@ -72,14 +72,14 @@ def group_images_by_brightness(dataset, n_clusters=5, show_summary=True):
     for img, label in zip(dataset, labels):
         grouped_data[label].append(img)
 
-    if show_summary:
-        plt.figure(figsize=(8, 4))
-        plt.hist(brightness_values, bins=30, color='gray')
-        plt.title("Brightness Distribution")
-        plt.xlabel("Average Brightness")
-        plt.ylabel("Number of Images")
-        plt.grid(True)
-        plt.show()
+#    if show_summary:
+#        plt.figure(figsize=(8, 4))
+#        plt.hist(brightness_values, bins=30, color='gray')
+#        plt.title("Brightness Distribution")
+#        plt.xlabel("Average Brightness")
+#        plt.ylabel("Number of Images")
+#        plt.grid(True)
+#        plt.show()
 
     return grouped_data, labels
 #group_0_images = grouped_images[0]

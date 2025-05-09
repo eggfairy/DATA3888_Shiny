@@ -4,6 +4,9 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 import numpy as np
 from collections import Counter
+from sklearn.cluster import KMeans
+from collections import defaultdict
+import matplotlib.pyplot as plt
 
 # def data_augmentation(img):
 #     augmentation_list = []
@@ -49,6 +52,44 @@ from collections import Counter
 #             augmented_labels.append(label)
             
 #     return augmented_images, augmented_labels
+
+
+# Data-pre arguring:
+#dataset = 100
+def group_images_by_brightness(dataset, n_clusters=5, show_summary=True):
+    def get_brightness(img):
+        if len(img.shape) == 3:
+            return np.mean(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+        else:
+            return np.mean(img)
+
+    brightness_values = np.array([get_brightness(img) for img in dataset]).reshape(-1, 1)
+    
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42)
+    labels = kmeans.fit_predict(brightness_values)
+    grouped_data = defaultdict(list)
+    
+    for img, label in zip(dataset, labels):
+        grouped_data[label].append(img)
+
+#    if show_summary:
+#        plt.figure(figsize=(8, 4))
+#        plt.hist(brightness_values, bins=30, color='gray')
+#        plt.title("Brightness Distribution")
+#        plt.xlabel("Average Brightness")
+#        plt.ylabel("Number of Images")
+#        plt.grid(True)
+#        plt.show()
+
+    return grouped_data, labels
+#group_0_images = grouped_images[0]
+
+
+#If need to do comparison between models
+#def set_augmentation_seed(seed):
+#    random.seed(seed)
+#    np.random.seed(seed)
+#    A.set_seed(seed)
 
 def get_augmentation_pipeline():
     return A.Compose([

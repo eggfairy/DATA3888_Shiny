@@ -1,90 +1,104 @@
 import os
 import sys
 import cv2
+import numpy as np
 from glob import glob
+from PIL import Image
 
-# === Command line arguments ===
-if len(sys.argv) == 3 and sys.argv[1] in ["-G","-M", "-g", "-m"]:
-    # python3 file.py -G/-M number
-    if sys.argv[1] in ["-G", "-g"]:
+def GaussianBlur(img: Image.Image, kernel_size: int=5): 
+    img = np.array(img)
+    img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    img_gauss = cv2.GaussianBlur(img_bgr, (kernel_size, kernel_size), 0)
+    img_gauss_rgb = cv2.cvtColor(img_gauss, cv2.COLOR_BGR2RGB)
+    return Image.fromarray(img_gauss_rgb)
+
+def MedianBlur(img: Image.Image, kernel_size: int=5): 
+    img = np.array(img)
+    img_bgr = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+    img_median = cv2.medianBlur(img_bgr, kernel_size)
+    img_median_rgb = cv2.cvtColor(img_median, cv2.COLOR_BGR2RGB)
+    return Image.fromarray(img_median_rgb)
+
+def main():
+    # === Command line arguments ===
+    if len(sys.argv) == 3 and sys.argv[1] in ["-G","-M", "-g", "-m"]:
+        # python3 file.py -G/-M number
+        if sys.argv[1] in ["-G", "-g"]:
+            method = "G"
+            level_num = int(sys.argv[2])
+            level = (level_num, level_num)
+            print(level)
+        elif sys.argv[1] in ["-M", "-m"]:
+            method = "M"
+            level_num = int(sys.argv[2])
+            level = level_num
+        print(f"Method: '{method}', Level: '{level}'")
+    else:
+        # default setting
         method = "G"
-        level_num = int(sys.argv[2])
-        level = (level_num, level_num)
-        print(level)
-    elif sys.argv[1] in ["-M", "-m"]:
-        method = "M"
-        level_num = int(sys.argv[2])
-        level = level_num
-    print(f"Method: '{method}', Level: '{level}'")
-else:
-    # default setting
-    method = "G"
-    level = (5, 5)
-    print(f"Method: '{method}', Level: '{level}'")
+        level = (5, 5)
+        print(f"Method: '{method}', Level: '{level}'")
 
 
-# === PATH of input & output folders ===
-# input folder labels
-path_pre = './Images/100/'
-image_labels = ['B_Cells', 'CD4+_T_Cells', 'DCIS_1', 'DCIS_2', 'Invasive_Tumor', 'Prolif_Invasive_Tumor']
-input_paths = []
-for label in image_labels:
-    input_paths.append(path_pre+label)
+    # === PATH of input & output folders ===
+    # input folder labels
+    path_pre = './Images/100/'
+    image_labels = ['B_Cells', 'CD4+_T_Cells', 'DCIS_1', 'DCIS_2', 'Invasive_Tumor', 'Prolif_Invasive_Tumor']
+    input_paths = []
+    for label in image_labels:
+        input_paths.append(path_pre+label)
 
-# check folder exists
-close_program = 0
-for p in input_paths:
-    if not os.path.isdir(p):
-        close_program = 1
-        print(f"Input folder '{p}'doesn't exists.")
+    # check folder exists
+    close_program = 0
+    for p in input_paths:
+        if not os.path.isdir(p):
+            close_program = 1
+            print(f"Input folder '{p}'doesn't exists.")
 
-if close_program == 1:
-    print("Program is closing...")
-    os._exit()
+    if close_program == 1:
+        print("Program is closing...")
+        os._exit()
 
-# output folder labels
-paths_out_gaussian = []
-paths_out_median = []
+    # output folder labels
+    paths_out_gaussian = []
+    paths_out_median = []
 
-for p in input_paths:
-    paths_out_gaussian.append(p+'_Gaussian_'+str(level_num))
-    os.makedirs(p+'_Gaussian_'+str(level_num), exist_ok=True)
-    paths_out_median.append(p+'_Median_'+str(level_num))
-    os.makedirs(p+'_Median_'+str(level_num), exist_ok=True)
+    for p in input_paths:
+        paths_out_gaussian.append(p+'_Gaussian_'+str(level_num))
+        os.makedirs(p+'_Gaussian_'+str(level_num), exist_ok=True)
+        paths_out_median.append(p+'_Median_'+str(level_num))
+        os.makedirs(p+'_Median_'+str(level_num), exist_ok=True)
 
-#print(paths_out_gaussian)
-#print(paths_out_median)
-
-
-# === Process images ===
-for p in input_paths:
-    image_paths = glob(os.path.join(p, '*.png'))
-    num_images = len(image_paths)
-    count = 0
-    if method == "G":
-        for path in image_paths:
-            img = cv2.imread(path)
-
-            # Apply Gaussian Blur
-            img_gauss = cv2.GaussianBlur(img, level, 0)
-            out_gauss = os.path.join(p+'_Gaussian_'+str(level_num), os.path.basename(path).replace('.png', '_gauss.png'))
-            cv2.imwrite(out_gauss, img_gauss)
-            count += 1
-            print(f"Saved {count}/{num_images}: {out_gauss}")
-
-    elif method == "M":
-        for path in image_paths:
-            img = cv2.imread(path)
-
-            # Apply Median Blur
-            img_median = cv2.medianBlur(img, level)
-            out_median = os.path.join(p+'_Median_'+str(level_num), os.path.basename(path).replace('.png', '_median.png'))
-            cv2.imwrite(out_median, img_median)
-            count += 1
-            print(f"Saved {count}/{num_images}: {out_median}")
+    #print(paths_out_gaussian)
+    #print(paths_out_median)
 
 
+    # === Process images ===
+    for p in input_paths:
+        image_paths = glob(os.path.join(p, '*.png'))
+        num_images = len(image_paths)
+        count = 0
+        if method == "G":
+            for path in image_paths:
+                img = cv2.imread(path)
 
+                # Apply Gaussian Blur
+                img_gauss = cv2.GaussianBlur(img, level, 0)
+                out_gauss = os.path.join(p+'_Gaussian_'+str(level_num), os.path.basename(path).replace('.png', '_gauss.png'))
+                cv2.imwrite(out_gauss, img_gauss)
+                count += 1
+                print(f"Saved {count}/{num_images}: {out_gauss}")
+
+        elif method == "M":
+            for path in image_paths:
+                img = cv2.imread(path)
+
+                # Apply Median Blur
+                img_median = cv2.medianBlur(img, level)
+                out_median = os.path.join(p+'_Median_'+str(level_num), os.path.basename(path).replace('.png', '_median.png'))
+                cv2.imwrite(out_median, img_median)
+                count += 1
+                print(f"Saved {count}/{num_images}: {out_median}")
 
 '''
 # === Parameters ===
@@ -101,3 +115,11 @@ gaussian_kernel = (7, 7)    # Stronger blur, removes more noise
 median_kernel = 7         # Stronger, may smooth out fine features
 #median_kernel = 11        # Very aggressive, possible artifacts
 '''
+
+if __name__ == "__main__":
+    # main()
+    img = Image.open("noisy.png").convert('RGB')
+    g = GaussianBlur(img)
+    m = MedianBlur(img)
+    g.save("gaussian.png")
+    m.save("median.png")

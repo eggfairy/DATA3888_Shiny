@@ -1,2 +1,4 @@
 Images/
 venv/
+__pycache__/
+masking_models/*.pkl

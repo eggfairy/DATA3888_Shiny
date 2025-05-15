@@ -1,4 +1,5 @@
 Images/
 venv/
-__pycache__/
 masking_models/*.pkl
+denoised_models/*.pkl
+denoised_variables/

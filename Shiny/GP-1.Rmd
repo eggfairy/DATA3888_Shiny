@@ -1,7 +1,6 @@
 
 ---
 title: "Cancer Analysis"
-output: html_document
 runtime: shiny
 ---
 

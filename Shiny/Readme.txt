@@ -25,7 +25,7 @@ Step 4: View Result
 
 Output:
 
-After clicking **Finish**, the following will be saved in `result/` according to current time:
+After clicking Finish, the following will be saved in /result file according to current time:
 
 - 2025-05-18_15-08-32_final_image.jpg
 - 2025-05-18_15-08-32_result.txt

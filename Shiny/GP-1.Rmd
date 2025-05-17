@@ -133,10 +133,10 @@ server <- function(input, output, session) {
         output_img = output_img,
         method = input$denoise_model
       ), quiet = TRUE)
-      output$denoiser_status <- renderText("✅ Denoising successful.")
+      output$denoiser_status <- renderText("Denoising successful.")
     } else {
       file.copy(input_img, output_img, overwrite = TRUE)
-      output$denoiser_status <- renderText("⚠️ No denoising applied.")
+      output$denoiser_status <- renderText("No denoising applied.")
     }
 
     denoised_img_path(output_img)

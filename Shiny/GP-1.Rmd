@@ -1,0 +1,160 @@
+
+---
+title: "Cancer Image Denoising and Analysis"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(shiny)
+library(shinyjs)
+library(magick)
+library(rmarkdown)
+```
+
+```{r app, echo=FALSE}
+available_denoisers <- list.files(pattern = "*.Rmd")
+available_denoisers <- gsub(".Rmd", "", available_denoisers)
+available_denoisers <- setdiff(available_denoisers, "GP-1-updated-dynamic-denoiser-button")
+available_denoisers <- c("None", available_denoisers)
+
+ui <- fluidPage(
+  useShinyjs(),
+  titlePanel("🧪 Cancer Likelihood Analysis Wizard"),
+  fluidRow(
+    column(3,
+      tags$style(HTML(".step-box { padding: 10px; margin-bottom: 15px; border-radius: 5px; background-color: #f1f1f1; text-align: center; } .step-active { background-color: #d4edda !important; font-weight: bold; border-left: 5px solid #28a745; }")),
+      div(id = "step1_box", class = "step-box step-active", "Step 1: Upload Image"),
+      div(id = "step2_box", class = "step-box", "Step 2: Denoise"),
+      div(id = "step3_box", class = "step-box", "Step 3: Analyze"),
+      div(id = "step4_box", class = "step-box", "Step 4: View Result")
+    ),
+    column(9,
+      uiOutput("stage_ui"),
+      br(),
+      fluidRow(
+        column(6, hidden(actionButton("prev_step", "Previous Step", class = "btn btn-secondary"))),
+        column(6, align = "right", hidden(actionButton("next_step", "Next Step", class = "btn btn-success")))
+      )
+    )
+  )
+)
+
+server <- function(input, output, session) {
+  step <- reactiveVal(1)
+  img_path <- reactiveVal()
+  denoised_img_path <- reactiveVal()
+  cancer_score <- reactiveVal()
+
+  observe({
+    lapply(1:4, function(i) {
+      shinyjs::removeClass(paste0("step", i, "_box"), "step-active")
+    })
+    shinyjs::hide("next_step")
+    shinyjs::hide("prev_step")
+    shinyjs::addClass(paste0("step", step(), "_box"), "step-active")
+    if (step() > 1) shinyjs::show("prev_step")
+  })
+
+  observeEvent(step(), {
+    output$stage_ui <- renderUI({
+      switch(step(),
+        div(
+          fileInput("img_file", "Upload an Image", accept = c(".jpg", ".jpeg", ".png")),
+          imageOutput("input_image")
+        ),
+        div(
+          h4("Denoise Image"),
+          selectInput("denoise_model", "Denoising Model", choices = available_denoisers),
+          actionButton("run_denoiser", "Run Denoiser", class = "btn btn-primary mb-3"),
+          textOutput("denoiser_status"),
+          fluidRow(
+            column(6, 
+              h5("Original Image"),
+              imageOutput("input_image_preview")
+            ),
+            column(6,
+              h5("Denoised Image"),
+              imageOutput("denoised_image")
+            )
+          )
+        ),
+        div(
+          h4("Select Analysis Model"),
+          selectInput("analysis_model", "Model", c("CNN", "SVM", "KNN")),
+          actionButton("run_analysis", "Run Analysis", class = "btn btn-primary")
+        ),
+        div(
+          h4("Prediction Result"),
+          plotOutput("output_image"),
+          verbatimTextOutput("cancer_likelihood")
+        )
+      )
+    })
+  })
+
+  observeEvent(input$img_file, {
+    req(input$img_file)
+    file.copy(input$img_file$datapath, "uploaded.jpg", overwrite = TRUE)
+    img_path("uploaded.jpg")
+    output$input_image <- renderImage({
+      list(src = img_path(), contentType = "image/jpeg", width = 300)
+    }, deleteFile = FALSE)
+    output$input_image_preview <- renderImage({
+      list(src = img_path(), contentType = "image/jpeg", width = 300)
+    }, deleteFile = FALSE)
+    shinyjs::show("next_step")
+  })
+
+  observeEvent(input$run_denoiser, {
+    req(img_path())
+    if (input$denoise_model != "None") {
+      rmd_file <- paste0(input$denoise_model, ".Rmd")
+      rmarkdown::render(rmd_file, params = list(
+        input_img = file.path("image", "uploaded.jpg"),
+        output_img = file.path("image", "denoised.jpg"),
+        method = input$denoise_model
+      ), quiet = TRUE)
+      output$denoiser_status <- renderText("Denoising successful.")
+    } else {
+      file.copy("uploaded.jpg", "denoised.jpg", overwrite = TRUE)
+      output$denoiser_status <- renderText("No denoising applied.")
+    }
+
+    denoised_img_path("denoised.jpg")
+    output$denoised_image <- renderImage({
+      list(src = denoised_img_path(), contentType = "image/jpeg", width = 300)
+    }, deleteFile = FALSE)
+
+    shinyjs::show("next_step")
+  })
+
+  observeEvent(input$run_analysis, {
+    showModal(modalDialog("Running model analysis...", footer = NULL))
+    Sys.sleep(1)
+    score <- runif(1, 0.1, 0.95)
+    cancer_score(score)
+    output$cancer_likelihood <- renderText({
+      paste("Cancer Likelihood:", round(score * 100, 2), "%")
+    })
+    output$output_image <- renderPlot({
+      img <- image_read(denoised_img_path())
+      plot(img)
+    })
+    removeModal()
+    shinyjs::show("next_step")
+  })
+
+  observeEvent(input$next_step, {
+    step_val <- step()
+    if (step_val < 4) step(step_val + 1)
+  })
+
+  observeEvent(input$prev_step, {
+    step_val <- step()
+    if (step_val > 1) step(step_val - 1)
+  })
+}
+
+shinyApp(ui, server)
+```

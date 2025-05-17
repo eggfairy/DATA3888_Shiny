@@ -20,8 +20,8 @@ Step 4: View Result
 - Displays the result and processed image.
 - Clicking 'Finish' will:
   - Save the result image and a text file with current Sydney time in `result/`
-  - Delete temporary files in /image
-  - Automatically close the app
+  - Delete temp files in /image
+  - Auto close the app
 
 Output:
 

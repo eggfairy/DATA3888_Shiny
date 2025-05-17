@@ -2,6 +2,8 @@
 Step 1: Upload Image
 - Upload a .jpg, .jpeg, or .png file.
 
+Image will be saved a copy in /image file, temporaily
+
 Step 2: Denoise Image
 - Select a denoising model from the dropdown.
 - View original and denoised images side by side.

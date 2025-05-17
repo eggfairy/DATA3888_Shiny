@@ -144,7 +144,7 @@ server <- function(input, output, session) {
     shinyjs::show("next_step")
   })
 
-  # pick model in file n run
+  # pick model in file n run -------------------------------------------------------------------------------------------------- For Chris
   observeEvent(input$run_analysis, {
     showModal(modalDialog("Running model analysis...", footer = NULL))
     Sys.sleep(1)

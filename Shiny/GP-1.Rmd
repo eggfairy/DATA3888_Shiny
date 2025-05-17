@@ -49,7 +49,7 @@ ui <- fluidPage(
 
 
 server <- function(input, output, session) {
-  step <- reactiveVal(1)  # 當前步驟
+  step <- reactiveVal(1)
   img_path <- reactiveVal()
   denoised_img_path <- reactiveVal()
   cancer_score <- reactiveVal()

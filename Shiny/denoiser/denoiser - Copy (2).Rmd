@@ -1,6 +1,5 @@
 ---
 title: "Run Denoising"
-output: html_document
 params:
   input_img: NULL
   output_img: NULL

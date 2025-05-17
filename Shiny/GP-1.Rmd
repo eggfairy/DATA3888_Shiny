@@ -1,6 +1,6 @@
 
 ---
-title: "Cancer Image Denoising and Analysis"
+title: "Cancer Analysis"
 output: html_document
 runtime: shiny
 ---
@@ -10,6 +10,7 @@ library(shiny)
 library(shinyjs)
 library(magick)
 library(rmarkdown)
+library(lubridate)
 ```
 
 ```{r app, echo=FALSE}

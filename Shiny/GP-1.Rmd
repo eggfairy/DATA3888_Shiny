@@ -173,13 +173,13 @@ server <- function(input, output, session) {
     removeModal()
     shinyjs::show("next_step")
   })
-  # ---------------------------------------------------------------------------------------------------------------------------------------------------------
   
   # finish result
   observeEvent(input$finish_btn, {
     score <- cancer_score()
     percent <- paste0(round(score * 100, 2), "%")
     model <- input$analysis_model
+    # ---------------------------------------------------------------------------------------------------------------------------------------------------------
     final_img <- file.path("image", "denoised.jpg")
     sydney_time <- format(with_tz(Sys.time(), "Australia/Sydney"), "%Y-%m-%d_%H-%M-%S")
 

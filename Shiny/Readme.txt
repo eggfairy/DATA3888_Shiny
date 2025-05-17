@@ -1,24 +1,24 @@
 
 Step 1: Upload Image
-- Upload a .jpg, .jpeg, or .png file.
+- Upload a .jpg, .jpeg, or .png file
 
 Image will be saved a copy in /image file, temporaily
 
 Step 2: Denoise Image
-- Select a denoising model from the dropdown.
-- View original and denoised images side by side.
+- Select a denoising model from the dropdown
+- View original and denoised images side by side
 
 Image will be saved a copy in /image file, temporaily
 Please store denoiser model in /denoiser
 
 Step 3: Analyze Image
-- Select a model such as CNN, SVM, or KNN.
-- Run analysis to predict cancer likelihood (randomized for simulation).
+- Select a model such as CNN, SVM, or KNN
+- Run analysis to predict cancer rate
 
 Please store model in /model
 
 Step 4: View Result
-- Displays the result and processed image.
+- Displays the result and processed image
 - Clicking 'Finish' will:
   - Save the result image and a text file with current Sydney time in `result/`
   - Delete temp files in /image

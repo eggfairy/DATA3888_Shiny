@@ -8,6 +8,7 @@ Step 2: Denoise Image
 - Select a denoising model from the dropdown.
 - View original and denoised images side by side.
 
+Image will be saved a copy in /image file, temporaily
 Please store denoiser model in /denoiser
 
 Step 3: Analyze Image

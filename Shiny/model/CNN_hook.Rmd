@@ -1,0 +1,27 @@
+---
+title: "Run CNN Hook"
+params:
+  input_img: NULL
+  output_heatmap: NULL
+  output_contour: NULL
+  method: NULL
+---
+
+```{r, echo=FALSE, message=FALSE}
+library(reticulate)
+use_virtualenv("r-reticulate")
+py <- import_main()
+
+img_path <- params$input_img
+heatmap_path <- params$output_heatmap
+contour_path <- params$output_contour
+method <- params$method
+
+if (!file.exists(img_path)) stop("Image file not found: ", img_path)
+
+img <- py$Image$open(img_path)
+
+result <- py$get_heatmap(img, method)
+
+result[[1]]$save(heatmap_path)
+result[[2]]$save(contour_path)

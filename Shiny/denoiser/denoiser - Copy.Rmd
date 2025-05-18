@@ -1,0 +1,35 @@
+---
+title: "Run Denoising"
+params:
+  input_img: NULL
+  output_img: NULL
+  method: NULL
+---
+
+```{r, echo=FALSE, message=FALSE}
+library(magick)
+
+img_path <- params$input_img
+out_path <- params$output_img
+
+if (!file.exists(img_path)) stop("Image file not found: ", img_path)
+
+img <- image_read(img_path)
+if (!inherits(img, "magick-image")) stop("Invalid image type.")
+
+if (params$method == "Restormer") {
+  img <- image_blur(img, 1)
+}
+
+r_channel <- image_channel(img, "red")
+black_canvas <- image_blank(width = image_info(img)$width,
+                            height = image_info(img)$height,
+                            color = "black")
+img_red <- image_composite(
+  image_composite(black_canvas, r_channel, operator = "plus"),
+  black_canvas, operator = "plus"
+)
+
+image_write(img_red, path = out_path, format = "jpeg")
+```
+

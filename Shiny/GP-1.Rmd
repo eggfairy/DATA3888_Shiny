@@ -1,4 +1,3 @@
-
 ---
 title: "Cancer Analysis"
 runtime: shiny
@@ -10,6 +9,13 @@ library(shinyjs)
 library(magick)
 library(rmarkdown)
 library(lubridate)
+library(reticulate)
+```
+
+```{r}
+use_python("/usr/bin/python3", required = TRUE)
+
+source_python("analysis.py")
 ```
 
 ```{r app, echo=FALSE}
@@ -17,11 +23,9 @@ library(lubridate)
 available_denoisers <- list.files("denoiser", pattern = "\\.Rmd$", full.names = FALSE)
 available_denoisers <- gsub("\\.Rmd$", "", available_denoisers)
 available_denoisers <- c("None", available_denoisers)
-
 #Model file for model
 available_models <- list.files("Model", pattern = "\\.Rmd$", full.names = FALSE)
 available_models <- gsub("\\.Rmd$", "", available_models)
-
 # UI
 ui <- fluidPage(
   useShinyjs(),
@@ -45,14 +49,11 @@ ui <- fluidPage(
     )
   )
 )
-
-
 server <- function(input, output, session) {
   step <- reactiveVal(1)
   img_path <- reactiveVal()
   denoised_img_path <- reactiveVal()
   cancer_score <- reactiveVal()
-
   # Display on legend
   observe({
     lapply(1:4, function(i) {
@@ -63,8 +64,6 @@ server <- function(input, output, session) {
     shinyjs::addClass(paste0("step", step(), "_box"), "step-active")
     if (step() > 1) shinyjs::show("prev_step")
   })
-
-
   observeEvent(step(), {
     output$stage_ui <- renderUI({
       switch(step(),
@@ -93,25 +92,54 @@ server <- function(input, output, session) {
         # Step4
         div(
           h4("Prediction Result"),
-          plotOutput("output_image"),
-          verbatimTextOutput("cancer_likelihood"),
+          fluidRow(
+            column(6,
+              h5("active heatmap"),
+              imageOutput("heatmap_img", width = "100%")
+            ),
+            column(6,
+              h5("Outline"),
+              imageOutput("contour_img", width = "100%")
+            )
+          ),
+          verbatimTextOutput("pred_label"),
+          verbatimTextOutput("pred_conf"),
           br(),
           actionButton("finish_btn", "Finish", class = "btn btn-danger")
         )
       )
     })
   })
-
   # phoro upload and copy
-  observeEvent(input$img_file, {
-    req(input$img_file)
-    dir.create("image", showWarnings = FALSE)
-    saved_path <- file.path("image", "uploaded.jpg")
-    file.copy(input$img_file$datapath, saved_path, overwrite = TRUE)
-    img_path(saved_path)
+  observeEvent(input$run_analysis, {
+    req(denoised_img_path())
+    showModal(modalDialog("Running model analysis", footer = NULL))
 
-    output$input_image <- renderImage({ list(src = saved_path, contentType = "image/jpeg", width = 300) }, deleteFile = FALSE)
-    output$input_image_preview <- renderImage({ list(src = saved_path, contentType = "image/jpeg", width = 300) }, deleteFile = FALSE)
+    img_file <- normalizePath(denoised_img_path())
+    transform_name <- input$denoise_model
+
+    result <- py$get_heatmap(py$Image$open(img_file), transform_name)
+    pred <- py$predict(py$Image$open(img_file), transform_name)
+
+    predicted_label <- pred[[1]]
+    confidence      <- pred[[2]]
+
+    output$heatmap_img <- renderImage({
+      list(src = "image/heatmap.png", contentType = "image/png", width = "100%")
+    }, deleteFile = FALSE)
+    
+    output$contour_img <- renderImage({
+      list(src = "image/contour.png", contentType = "image/png", width = "100%")
+    }, deleteFile = FALSE)
+    
+    output$pred_label <- renderText({
+      paste("Predicted Label:", predicted_label)
+    })
+    output$pred_conf <- renderText({
+      paste("Confidence:", sprintf("%.2f%%", confidence))
+    })
+    
+    removeModal()
     shinyjs::show("next_step")
   })
 
@@ -121,12 +149,10 @@ server <- function(input, output, session) {
     input_img <- normalizePath(file.path("image", "uploaded.jpg"))
     output_img <- normalizePath(file.path("image", "denoised.jpg"))
     rmd_file <- file.path("denoiser", paste0(input$denoise_model, ".Rmd"))
-
     if (!file.exists(rmd_file)) {
       output$denoiser_status <- renderText(paste("Cannot find:", rmd_file))
       return()
     }
-
     if (input$denoise_model != "None") {
       rmarkdown::render(rmd_file, params = list(
         input_img = input_img,
@@ -138,38 +164,38 @@ server <- function(input, output, session) {
       file.copy(input_img, output_img, overwrite = TRUE)
       output$denoiser_status <- renderText("No denoising applied.")
     }
-
     denoised_img_path(output_img)
     output$denoised_image <- renderImage({ list(src = output_img, contentType = "image/jpeg", width = 300) }, deleteFile = FALSE)
     shinyjs::show("next_step")
   })
-
-  # pick model in file n run ---------------------------------------------------------------------------------------------------------------------- For Chris
+  # pick model in file n run
   observeEvent(input$run_analysis, {
     showModal(modalDialog("Running model analysis...", footer = NULL))
     Sys.sleep(1)
     output_img <- file.path("image", "denoised.jpg")
     rmd_model <- file.path("Model", paste0(input$analysis_model, ".Rmd"))
-
     if (file.exists(rmd_model)) {
       rmarkdown::render(rmd_model, params = list(
         input_img = normalizePath(output_img),
         output_txt = normalizePath(file.path("image", "result.txt"))
       ), quiet = TRUE)
     }
-
-    score <- runif(1, 0.1, 0.95)
+    score_txt <- file.path("image", "result.txt")
+    if (file.exists(score_txt)) {
+      score_val <- as.numeric(readLines(score_txt, warn = FALSE))
+      score_val <- max(0, min(1, score_val))
+    } else {
+      score_val <- NA
+    }
+    cancer_score(score_val)
     cancer_score(score)
-
     output$cancer_likelihood <- renderText({
       paste("Cancer Likelihood:", round(score * 100, 2), "%")
     })
-
     output$output_image <- renderPlot({
       img <- image_read(output_img)
       plot(img)
     })
-
     removeModal()
     shinyjs::show("next_step")
   })
@@ -179,15 +205,12 @@ server <- function(input, output, session) {
     score <- cancer_score()
     percent <- paste0(round(score * 100, 2), "%")
     model <- input$analysis_model
-    # ---------------------------------------------------------------------------------------------------------------------------------------------------------
     final_img <- file.path("image", "denoised.jpg")
     sydney_time <- format(with_tz(Sys.time(), "Australia/Sydney"), "%Y-%m-%d_%H-%M-%S")
-
     dir.create("result", showWarnings = FALSE)
     out_img <- file.path("result", paste0(sydney_time, "_final_image.jpg"))
     out_txt <- file.path("result", paste0(sydney_time, "_result.txt"))
     file.copy(final_img, out_img, overwrite = TRUE)
-
     writeLines(
       c(
         paste("Cancer Likelihood:", percent),
@@ -196,20 +219,16 @@ server <- function(input, output, session) {
       ),
       con = out_txt
     )
-
     unlink(list.files("image", full.names = TRUE), recursive = TRUE)
     stopApp()
   })
-
   # step before and after
   observeEvent(input$next_step, {
     if (step() < 4) step(step() + 1)
   })
-
   observeEvent(input$prev_step, {
     if (step() > 1) step(step() - 1)
   })
 }
-
 shinyApp(ui, server)
 ```

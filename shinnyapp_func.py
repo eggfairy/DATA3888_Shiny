@@ -190,12 +190,13 @@ def predict(img: Image.Image, transform: str, model: str) -> tuple[Image.Image, 
         predicted_class = pred_model.predict(features)[0]
         predicted_label = le.inverse_transform([predicted_class])[0]
         predicted_label = OUTPUT_LABELS.get(predicted_label, "None")
-        return predicted_label, -1 # confidence not available for traditional ML models for now
+        confidence = pred_model.predict_proba(features)[0][predicted_class] * 100
+        return predicted_label, confidence # confidence not available for traditional ML models for now
 
 
 def main():
     img = Image.open("example.png")
-    label, confidence = predict(img, "Centre", "SVM")
+    label, confidence = predict(img, "Centre", "KNN")
     print(f"Predicted Label: {label}")
     print(f"Confidence: {confidence:.2f}%")
     ##### Do whatever you want for testing #####

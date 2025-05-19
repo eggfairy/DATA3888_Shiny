@@ -196,7 +196,13 @@ def predict(img: Image.Image, transform: str, model: str) -> tuple[Image.Image, 
 
 def main():
     img = Image.open("example.png")
-    label, confidence = predict(img, "Centre", "KNN")
+    label, confidence = predict(img, "Centre", "SVM")
+    print(f"Predicted Label: {label}")
+    print(f"Confidence: {confidence:.2f}%")
+    label, confidence = predict(img, "Non-Centre", "SVM")
+    print(f"Predicted Label: {label}")
+    print(f"Confidence: {confidence:.2f}%")
+    label, confidence = predict(img, "Random", "SVM")
     print(f"Predicted Label: {label}")
     print(f"Confidence: {confidence:.2f}%")
     ##### Do whatever you want for testing #####

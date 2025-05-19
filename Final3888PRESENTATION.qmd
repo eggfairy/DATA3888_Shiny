@@ -7,7 +7,7 @@ format:
     auto-slide: 2000
     scrollable: true
     title-slide-attributes: 
-      data-background-image: /Slide Images/cell_13748_100.png
+      data-background-image: cell_13748_100.png
 author: Brian, Chris, Eden, Kyle, Michael
 editor: visual
 ---

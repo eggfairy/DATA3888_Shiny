@@ -1,0 +1,203 @@
+---
+title: "Image Analysis"
+format: 
+  revealjs:
+    incremental: true
+    transition: slide
+    auto-slide: 2000
+    scrollable: true
+    title-slide-attributes: 
+      data-background-image: cell_13748_100.png
+author: Brian, Chris, Eden, Kyle, Michael
+editor: visual
+---
+
+```{r, warning = FALSE, echo = FALSE, message = FALSE}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(plotly)
+library(caret)
+library(randomForest)
+library(car)
+library(knitr)
+library(tibble)
+library(corrplot)
+library(reshape2)
+library(tinytex)
+library(reticulate)
+library(e1071)
+library(rpart)
+library(RWeka)
+library(pROC)
+library(PRROC)
+```
+
+## Why Denoising Matters in Medical ML {background-image="cell_13748_100.png"}
+
+-   Noisy tumor images reduce model performance.
+
+-   Real-world data is often noisy, especially in medical imaging.
+
+-   Denoising is common, but rarely evaluated for downstream ML impact.
+
+::: {.notes}
+Notes go here
+:::
+
+
+## The Impact of Denoising on Tumor Image Analysis {background-image="cell_13748_100.png"}
+
+-   Investigate how denoising affects:
+
+-   Texture, edges, and diagnostic features.
+
+-   Tumor classification, segmentation, and detection accuracy.
+
+-   Help build more reliable medical AI systems.
+
+::: {.notes}
+Notes go here
+:::
+
+## Research Question 1: Denoisers {background-image="cell_13748_100.png"}
+
+How do different denoising strategies influence the performance on different classification models?
+
+Types of Denoisers:
+
+-   Gaussian Blur
+-   Median Blur
+-   DnCNN
+-   Restormer
+
+::: {.notes}
+Notes go here
+:::
+
+## Denoising Results By Accuracy {background-image="cell_13748_100.png"} 
+::::{.columns}
+
+:::{.column width="80%"}
+![](AccuracyDenoiser.png)
+:::
+
+::: {.column width="20%"}
+
+* Point 1
+* Point 2
+* Point 3
+:::
+
+::::
+
+::: {.notes}
+Notes go here
+:::
+
+
+
+## F1 Score {background-image="cell_13748_100.png"}
+
+::::{.columns}
+
+:::{.column width="80%"}
+![](f1denoiser.png){width="80%"}
+:::
+
+::: {.column width="20%"}
+
+* Point 1
+* Point 2
+* Point 3
+
+:::
+
+::::
+
+::: {.notes}
+Notes go here
+:::
+
+## Discussion {background-image="cell_13748_100.png"}
+
+
+::: {.fragment .fade-in}
+::: {.fragment .highlight-red}
+::: {.fragment .semi-fade-out}
+Which group gives the highest validation/test accuracy?
+
+Does denoising help generalization (smaller train-test gap)?
+
+Are classical filters enough, or are deep learning denoisers better?
+:::
+:::
+:::
+
+::: {.notes}
+Notes go here
+:::
+
+
+## Research Question 2: Weights {background-image="cell_13748_100.png"}
+
+Is the centre of an image more important to classification models?/ Are important cells at the centre?
+
+::: {.notes}
+Notes go here
+:::
+
+## Accuracy {background-image="cell_13748_100.png"}
+
+::::{.columns}
+
+:::{.column width="80%"}
+![](Accuracy1.png){width="80%"}
+:::
+
+::: {.column width="20%"}
+
+* Point 1
+* Point 2
+* Point 3
+:::
+
+::::
+
+::: {.notes}
+Notes go here
+:::
+
+
+## F1-Score {background-image="cell_13748_100.png"}
+
+::::{.columns}
+
+:::{.column width="80%"}
+![](F1Score1.png){width="80%"}
+:::
+
+::: {.column width="20%"}
+
+* Point 1
+* Point 2
+* Point 3
+:::
+
+::::
+
+::: {.notes}
+Notes go here
+:::
+
+## Discussion {background-image="cell_13748_100.png"}
+
+::: {.notes}
+Notes go here
+:::
+
+## Conclusion {background-image="cell_13748_100.png"}
+
+::: {.notes}
+Notes go here
+:::

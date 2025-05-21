@@ -1,27 +1,46 @@
 ---
-title: "Run CNN Hook"
+title: "Model_hook"
 params:
-  input_img: NULL
-  output_heatmap: NULL
-  output_contour: NULL
-  method: NULL
+  input_img: NULL       # Path to input image
+  method: NULL          # Denoising or masking method
+  model_type: NULL      # One of "CNN", "SVM", "Random Forest", "KNN"
+  result_txt: NULL      # Path to save text result
+  result_img: NULL      # Path to save result image
 ---
 
 ```{r, echo=FALSE, message=FALSE}
 library(reticulate)
-use_virtualenv("r-reticulate")
-py <- import_main()
+library(magick)
 
+# Define Python environment
+use_python("/Library/Frameworks/Python.framework/Versions/3.12/bin/python3", required = TRUE)  
+
+# Load Python code
+source_python("shinnyapp_func.py")  # assumes all functions from your script are here
+
+# Load image
 img_path <- params$input_img
-heatmap_path <- params$output_heatmap
-contour_path <- params$output_contour
-method <- params$method
-
 if (!file.exists(img_path)) stop("Image file not found: ", img_path)
+img <- PIL$Image$open(img_path)
 
-img <- py$Image$open(img_path)
+# Run prediction
+result <- predict(img, params$method, params$model_type)
+predicted_label <- result[[1]]
+confidence <- sprintf("%.2f%%", result[[2]])
 
-result <- py$get_heatmap(img, method)
+# Save text output
+if (!is.null(params$result_txt)) {
+  writeLines(
+    paste("Prediction:", predicted_label, "\nConfidence:", confidence),
+    con = params$result_txt
+  )
+}
 
-result[[1]]$save(heatmap_path)
-result[[2]]$save(contour_path)
+# Optional: Save visualization with bounding box if model is CNN
+if (params$model_type == "CNN" && !is.null(params$result_img)) {
+  heatmap <- get_heatmap(img, params$method)
+  result_img <- heatmap[[2]]
+  temp_path <- tempfile(fileext = ".png")
+  result_img$save(temp_path)
+  file.copy(temp_path, params$result_img, overwrite = TRUE)
+}

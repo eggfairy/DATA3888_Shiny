@@ -22,9 +22,11 @@ if (length(available_denoisers) > 0) {
 } else {
   available_denoisers <- "None"
 }
+
 #Model file for model
 available_models <- list.files("Model", pattern = "\\.Rmd$", full.names = FALSE)
 available_models <- gsub("\\.Rmd$", "", available_models)
+
 # UI
 ui <- fluidPage(
   useShinyjs(),
@@ -166,10 +168,24 @@ server <- function(input, output, session) {
     output_txt <- file.path("image", "result.txt")
     
     rmd_model <- file.path("Model", paste0(input$analysis_model, ".Rmd"))
+
+    input_img <- normalizePath("image/denoised.jpg", mustWork = FALSE)
+    result_txt <- normalizePath("image/result.txt", mustWork = FALSE)
+    result_img <- normalizePath("image/heatmap.png", mustWork = FALSE)
+    
+    if (!file.exists(input_img)) {
+      showNotification("Denoised image not found. Please complete Step 2 first.", type = "error")
+      removeModal()
+      return()
+    }
+    
     if (file.exists(rmd_model)) {
       rmarkdown::render(rmd_model, params = list(
-        input_img = output_img,
-        result_txt = output_txt
+        input_img = input_img,
+        method = input$denoise_model,
+        model_type = input$analysis_model,
+        result_txt = result_txt,
+        result_img = result_img
       ), quiet = TRUE)
     }
     score_txt <- file.path("image", "result.txt")

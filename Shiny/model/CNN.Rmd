@@ -1,0 +1,43 @@
+---
+title: "CNN"
+params:
+  input_img: NULL
+  method: NULL
+  model_type: NULL
+  result_txt: NULL
+  result_img: NULL
+---
+
+```{r, echo=TRUE, message=TRUE}
+library(reticulate)
+library(magick)
+
+img_path <- params$input_img
+method <- params$method
+model <- params$model_type
+result_txt <- params$result_txt
+result_img <- params$result_img
+
+# Importing Python files
+source_python("python/shinnyapp_func.py")
+
+img <- import("PIL.Image")$open(img_path)$convert("RGB")
+
+# Python's prediction function
+res <- predict(img, method, model)
+predicted_label <- res[[1]]
+confidence <- res[[2]]
+score_numeric <- min(1.0, max(0.0, confidence / 100))
+
+# Writing text output
+if (!is.null(result_txt)) {
+  writeLines(as.character(score_numeric), con = result_txt)
+}
+
+# Save Heatmap
+if (!is.null(result_img)) {
+  heatmap <- get_heatmap(img, method)
+  heatmap[[1]]$save(result_img)  # heatmap image
+  heatmap[[2]]$save("image/contour.png")  # contour image
+}
+```

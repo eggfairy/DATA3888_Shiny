@@ -1,5 +1,5 @@
 ---
-title: "CNN (Using Python)"
+title: "CNN"
 params:
   input_img: NULL
   method: NULL

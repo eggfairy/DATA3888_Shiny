@@ -1,46 +1,43 @@
 ---
-title: "Model_hook"
+title: "CNN (Using Python)"
 params:
-  input_img: NULL       # Path to input image
-  method: NULL          # Denoising or masking method
-  model_type: NULL      # One of "CNN", "SVM", "Random Forest", "KNN"
-  result_txt: NULL      # Path to save text result
-  result_img: NULL      # Path to save result image
+  input_img: NULL
+  method: NULL
+  model_type: NULL
+  result_txt: NULL
+  result_img: NULL
 ---
 
-```{r, echo=FALSE, message=FALSE}
+```{r, echo=TRUE, message=TRUE}
 library(reticulate)
 library(magick)
 
-# Define Python environment
-use_python("/Library/Frameworks/Python.framework/Versions/3.12/bin/python3", required = TRUE)  
-
-# Load Python code
-source_python("shinnyapp_func.py")  # assumes all functions from your script are here
-
-# Load image
 img_path <- params$input_img
-if (!file.exists(img_path)) stop("Image file not found: ", img_path)
-img <- PIL$Image$open(img_path)
+method <- params$method
+model <- params$model_type
+result_txt <- params$result_txt
+result_img <- params$result_img
 
-# Run prediction
-result <- predict(img, params$method, params$model_type)
-predicted_label <- result[[1]]
-confidence <- sprintf("%.2f%%", result[[2]])
+# Importing Python files
+source_python("python/shinnyapp_func.py")
 
-# Save text output
-if (!is.null(params$result_txt)) {
-  writeLines(
-    paste("Prediction:", predicted_label, "\nConfidence:", confidence),
-    con = params$result_txt
-  )
+img <- import("PIL.Image")$open(img_path)$convert("RGB")
+
+# Python's prediction function
+res <- predict(img, method, model)
+predicted_label <- res[[1]]
+confidence <- res[[2]]
+score_numeric <- min(1.0, max(0.0, confidence / 100))
+
+# Writing text output
+if (!is.null(result_txt)) {
+  writeLines(as.character(score_numeric), con = result_txt)
 }
 
-# Optional: Save visualization with bounding box if model is CNN
-if (params$model_type == "CNN" && !is.null(params$result_img)) {
-  heatmap <- get_heatmap(img, params$method)
-  result_img <- heatmap[[2]]
-  temp_path <- tempfile(fileext = ".png")
-  result_img$save(temp_path)
-  file.copy(temp_path, params$result_img, overwrite = TRUE)
+# Save Heatmap
+if (!is.null(result_img)) {
+  heatmap <- get_heatmap(img, method)
+  heatmap[[1]]$save(result_img)  # heatmap image
+  heatmap[[2]]$save("image/contour.png")  # contour image
 }
+```

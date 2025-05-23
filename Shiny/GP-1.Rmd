@@ -13,7 +13,6 @@ library(reticulate)
 ```
 
 ```{r app, echo=FALSE}
-#Denoiser file for denoiser model
 available_denoisers <- list.files("denoiser", pattern = "\\.Rmd$", full.names = FALSE)
 available_denoisers <- gsub("\\.Rmd$", "", available_denoisers)
 if (length(available_denoisers) > 0) {
@@ -23,11 +22,9 @@ if (length(available_denoisers) > 0) {
   available_denoisers <- "None"
 }
 
-#Model file for model
 available_models <- list.files("Model", pattern = "\\.Rmd$", full.names = FALSE)
 available_models <- gsub("\\.Rmd$", "", available_models)
 
-# UI
 ui <- fluidPage(
   useShinyjs(),
   titlePanel("Cancer Analysis"),
@@ -50,17 +47,15 @@ ui <- fluidPage(
     )
   )
 )
+
 server <- function(input, output, session) {
   step <- reactiveVal(1)
   img_path <- reactiveVal()
   denoised_img_path <- reactiveVal()
   cancer_score <- reactiveVal()
 
-  # Display on legend
   observe({
-    lapply(1:4, function(i) {
-      shinyjs::removeClass(paste0("step", i, "_box"), "step-active")
-    })
+    lapply(1:4, function(i) shinyjs::removeClass(paste0("step", i, "_box"), "step-active"))
     shinyjs::hide("next_step")
     shinyjs::hide("prev_step")
     shinyjs::addClass(paste0("step", step(), "_box"), "step-active")
@@ -70,12 +65,10 @@ server <- function(input, output, session) {
   observeEvent(step(), {
     output$stage_ui <- renderUI({
       switch(step(),
-        # Step 1
         div(
           fileInput("img_file", "Upload an Image", accept = c(".jpg", ".jpeg", ".png")),
           imageOutput("input_image")
         ),
-        # Step 2
         div(
           h4("Denoise Image"),
           selectInput("denoise_model", "Denoising Model", choices = available_denoisers, selected = available_denoisers[1]),
@@ -86,18 +79,16 @@ server <- function(input, output, session) {
             column(6, h5("Denoised Image"), imageOutput("denoised_image"))
           )
         ),
-        # Step 3
         div(
           h4("Select Analysis Model"),
           selectInput("analysis_model", "Model", choices = available_models),
           actionButton("run_analysis", "Run Analysis", class = "btn btn-primary")
         ),
-        # Step 4
         div(
           h4("Prediction Result"),
           fluidRow(
-            column(6, h5("active heatmap"), imageOutput("heatmap_img", width = "100%")),
-            column(6, h5("Outline"), imageOutput("contour_img", width = "100%"))
+            column(6, h5("Active Heatmap"), imageOutput("heatmap_img", width = "300px", height = "300px")),
+            column(6, h5("Outline"), imageOutput("contour_img", width = "300px", height = "300px"))
           ),
           verbatimTextOutput("pred_label"),
           verbatimTextOutput("pred_conf"),
@@ -108,12 +99,9 @@ server <- function(input, output, session) {
     })
   })
 
-  # Step 1: Upload and process image
   observeEvent(input$img_file, {
     req(input$img_file)
-      if (file.exists("image") && !dir.exists("image")) {
-      file.remove("image")
-    }
+    if (file.exists("image") && !dir.exists("image")) file.remove("image")
     dir.create("image", showWarnings = FALSE)
     uploaded_path <- file.path("image", "uploaded.jpg")
     file.copy(input$img_file$datapath, uploaded_path, overwrite = TRUE)
@@ -124,61 +112,47 @@ server <- function(input, output, session) {
     shinyjs::show("next_step")
   })
 
-  # Step 2: Run Denoiser
   observeEvent(input$run_denoiser, {
     req(img_path())
-    input_img <- normalizePath(file.path("image", "uploaded.jpg"))
-    output_img <- normalizePath(file.path("image", "denoised.jpg"))
+    input_img <- normalizePath("image/uploaded.jpg")
+    output_img <- normalizePath("image/denoised.jpg")
     rmd_file <- file.path("denoiser", paste0(input$denoise_model, ".Rmd"))
     if (!file.exists(rmd_file)) {
       output$denoiser_status <- renderText(paste("Cannot find:", rmd_file))
       return()
     }
-    if (input$denoise_model != "None") {
-      rmarkdown::render(rmd_file, params = list(
-        input_img = input_img,
-        output_img = output_img,
-        method = input$denoise_model
-      ), quiet = TRUE)
+    rmarkdown::render(rmd_file, params = list(
+      input_img = input_img,
+      output_img = output_img,
+      method = input$denoise_model
+    ), quiet = TRUE, knit_root_dir = getwd())
+    if (file.exists(output_img)) {
+      denoised_img_path(output_img)
+      output$input_image_preview <- renderImage({
+        list(src = input_img, contentType = "image/jpeg", width = 300)
+      }, deleteFile = FALSE)
+      output$denoised_image <- renderImage({
+        list(src = output_img, contentType = "image/jpeg", width = 300)
+      }, deleteFile = FALSE)
+      shinyjs::show("next_step")
       output$denoiser_status <- renderText("Denoising successful.")
     } else {
-      file.copy(input_img, output_img, overwrite = TRUE)
-      output$denoiser_status <- renderText("No denoising applied.")
+      output$denoiser_status <- renderText("Denoised image not created.")
     }
-    denoised_img_path(output_img)
-    output$input_image_preview <- renderImage({
-      list(src = input_img, contentType = "image/jpeg", width = 300)
-    }, deleteFile = FALSE)
-    output$denoised_image <- renderImage({
-      list(src = output_img, contentType = "image/jpeg", width = 300)
-    }, deleteFile = FALSE)
-    shinyjs::show("next_step")
   })
 
-  # Step 3: Run Analysis Model
   observeEvent(input$run_analysis, {
     showModal(modalDialog("Running model analysis...", footer = NULL))
     Sys.sleep(1)
-    output_img <- file.path("image", "denoised.jpg")
-    if (!file.exists(output_img)) {
+    input_img <- normalizePath("image/denoised.jpg", mustWork = FALSE)
+    result_txt <- normalizePath("image/result.txt", mustWork = FALSE)
+    result_img <- normalizePath("image/heatmap.png", mustWork = FALSE)
+    rmd_model <- file.path("Model", paste0(input$analysis_model, ".Rmd"))
+    if (!file.exists(input_img)) {
       showNotification("Denoised image not found", type = "error")
       removeModal()
       return()
     }
-    output_txt <- file.path("image", "result.txt")
-    
-    rmd_model <- file.path("Model", paste0(input$analysis_model, ".Rmd"))
-
-    input_img <- normalizePath("image/denoised.jpg", mustWork = FALSE)
-    result_txt <- normalizePath("image/result.txt", mustWork = FALSE)
-    result_img <- normalizePath("image/heatmap.png", mustWork = FALSE)
-    
-    if (!file.exists(input_img)) {
-      showNotification("Denoised image not found. Please complete Step 2 first.", type = "error")
-      removeModal()
-      return()
-    }
-    
     if (file.exists(rmd_model)) {
       rmarkdown::render(rmd_model, params = list(
         input_img = input_img,
@@ -186,11 +160,10 @@ server <- function(input, output, session) {
         model_type = input$analysis_model,
         result_txt = result_txt,
         result_img = result_img
-      ), quiet = TRUE)
+      ), envir = new.env(), knit_root_dir = getwd(), quiet = TRUE)
     }
-    score_txt <- file.path("image", "result.txt")
-    if (file.exists(score_txt)) {
-      score_val <- as.numeric(readLines(score_txt, warn = FALSE))
+    if (file.exists(result_txt)) {
+      score_val <- as.numeric(readLines(result_txt, warn = FALSE))
       score_val <- max(0, min(1, score_val))
     } else {
       score_val <- NA
@@ -203,16 +176,15 @@ server <- function(input, output, session) {
       paste("Confidence:", ifelse(is.na(score_val), "N/A", sprintf("%.2f%%", score_val * 100)))
     })
     output$heatmap_img <- renderImage({
-      list(src = "image/heatmap.png", contentType = "image/png", width = "100%")
+      list(src = "image/heatmap.png", contentType = "image/png", width = 300, height = 300)
     }, deleteFile = FALSE)
     output$contour_img <- renderImage({
-      list(src = "image/contour.png", contentType = "image/png", width = "100%")
+      list(src = "image/contour.png", contentType = "image/png", width = 300, height = 300)
     }, deleteFile = FALSE)
     removeModal()
     shinyjs::show("next_step")
   })
 
-  # Step 4: Finish
   observeEvent(input$finish_btn, {
     score <- cancer_score()
     percent <- paste0(round(score * 100, 2), "%")
@@ -235,7 +207,6 @@ server <- function(input, output, session) {
     stopApp()
   })
 
-  # Step navigation
   observeEvent(input$next_step, {
     if (step() < 4) step(step() + 1)
   })

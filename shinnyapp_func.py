@@ -195,17 +195,12 @@ def predict(img: Image.Image, transform: str, model: str) -> tuple[Image.Image, 
 
 
 def main():
-    img = Image.open("example.png")
-    label, confidence = predict(img, "Centre", "SVM")
-    print(f"Predicted Label: {label}")
-    print(f"Confidence: {confidence:.2f}%")
-    label, confidence = predict(img, "Non-Centre", "SVM")
-    print(f"Predicted Label: {label}")
-    print(f"Confidence: {confidence:.2f}%")
-    label, confidence = predict(img, "Random", "SVM")
-    print(f"Predicted Label: {label}")
-    print(f"Confidence: {confidence:.2f}%")
-    ##### Do whatever you want for testing #####
+    img = Image.open("cell_355_100.png")
+    restomer_img = get_transform(img, "Restormer")
+    dncnn_img = get_transform(img, "DnCNN")
+    restomer_img.save("cell_355_100_restormer.png")
+    dncnn_img.save("cell_355_100_dncnn.png")
+    
 
 
 if __name__ == "__main__":

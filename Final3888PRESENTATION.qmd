@@ -41,10 +41,9 @@ library(PRROC)
 
 -   Denoising is common, but rarely evaluated for downstream ML impact.
 
-::: {.notes}
+::: notes
 Notes go here
 :::
-
 
 ## The Impact of Denoising on Tumor Image Analysis {background-image="cell_13748_100.png"}
 
@@ -56,7 +55,7 @@ Notes go here
 
 -   Help build more reliable medical AI systems.
 
-::: {.notes}
+::: notes
 Notes go here
 :::
 
@@ -71,59 +70,50 @@ Types of Denoisers:
 -   DnCNN
 -   Restormer
 
-::: {.notes}
+::: notes
 Notes go here
 :::
 
-## Denoising Results By Accuracy {background-image="cell_13748_100.png"} 
-::::{.columns}
+## Denoising Results By Accuracy {background-image="cell_13748_100.png"}
 
-:::{.column width="80%"}
+::::: columns
+::: {.column width="80%"}
 ![](AccuracyDenoiser.png)
 :::
 
 ::: {.column width="20%"}
-
-* Point 1
-* Point 2
-* Point 3
+-   Point 1
+-   Point 2
+-   Point 3
 :::
+:::::
 
-::::
-
-::: {.notes}
+::: notes
 Notes go here
 :::
 
-
-
 ## F1 Score {background-image="cell_13748_100.png"}
 
-::::{.columns}
-
-:::{.column width="80%"}
+::::: columns
+::: {.column width="80%"}
 ![](f1denoiser.png){width="80%"}
 :::
 
 ::: {.column width="20%"}
-
-* Point 1
-* Point 2
-* Point 3
-
+-   Point 1
+-   Point 2
+-   Point 3
 :::
+:::::
 
-::::
-
-::: {.notes}
+::: notes
 Notes go here
 :::
 
 ## Discussion {background-image="cell_13748_100.png"}
 
-
-::: {.fragment .fade-in}
-::: {.fragment .highlight-red}
+::::: {.fragment .fade-in}
+:::: {.fragment .highlight-red}
 ::: {.fragment .semi-fade-out}
 Which group gives the highest validation/test accuracy?
 
@@ -131,73 +121,65 @@ Does denoising help generalization (smaller train-test gap)?
 
 Are classical filters enough, or are deep learning denoisers better?
 :::
-:::
-:::
+::::
+:::::
 
-::: {.notes}
+::: notes
 Notes go here
 :::
-
 
 ## Research Question 2: Weights {background-image="cell_13748_100.png"}
 
 Is the centre of an image more important to classification models?/ Are important cells at the centre?
 
-::: {.notes}
+::: notes
 Notes go here
 :::
 
 ## Accuracy {background-image="cell_13748_100.png"}
 
-::::{.columns}
-
-:::{.column width="80%"}
+::::: columns
+::: {.column width="80%"}
 ![](Accuracy1.png){width="80%"}
 :::
 
 ::: {.column width="20%"}
-
-* Point 1
-* Point 2
-* Point 3
+-   Point 1
+-   Point 2
+-   Point 3
 :::
+:::::
 
-::::
-
-::: {.notes}
+::: notes
 Notes go here
 :::
 
-
 ## F1-Score {background-image="cell_13748_100.png"}
 
-::::{.columns}
-
-:::{.column width="80%"}
+::::: columns
+::: {.column width="80%"}
 ![](F1Score1.png){width="80%"}
 :::
 
 ::: {.column width="20%"}
-
-* Point 1
-* Point 2
-* Point 3
+-   Point 1
+-   Point 2
+-   Point 3
 :::
+:::::
 
-::::
-
-::: {.notes}
+::: notes
 Notes go here
 :::
 
 ## Discussion {background-image="cell_13748_100.png"}
 
-::: {.notes}
+::: notes
 Notes go here
 :::
 
 ## Conclusion {background-image="cell_13748_100.png"}
 
-::: {.notes}
+::: notes
 Notes go here
 :::

@@ -13,6 +13,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
 import pickle
+import os
+import requests
 
 import warnings
 warnings.filterwarnings("ignore")
@@ -39,6 +41,40 @@ OUTPUT_LABELS = {
     "Non_Invasive_Tumor": "Non Invasive Tumor",
     "Invasive_Tumor_Set": "Invasive Tumor"
 }
+ML_MODELS_URLs = {
+    "SVM": {
+        "None": "1OSr4Npixf9Db22_YvYMjNOh2z1-bJzo7",
+        "Restormer": "1Wz5Z6S5Tq1Jv3s41sU-eOH8-PiREKlJw",
+        "Gaussian_Blur": "10RiSI1YuLrsAeN9KmUcq5pNfTwbTjk9J",
+        "Median_Blur": "1Q0JmI9c5aCpjFxY6sU6TASRdLT2kgp2L",
+        "DnCNN": "13TDJKK2yrgPsx_maZfZF5K670cCvI2TW",
+        "Centre": "1maTbljndxz4d2nfdSEEDjmLUrREOG_Vw",
+        "Non-centre": "1hXF4EsvhRa-1pG1f5BbavotAefdgdBIU",
+        "Random": "1Sb9sRFwJe03TGZXyR9IDosn4rJ_3F-LK"
+
+    },
+    "RF": {
+        "None": "1967KVeT8ERg3EqdSsAcqox4Cao3ZZpOk",
+        "Restormer": "17tqG7P15lnFB6FqnP7jB1S9VENwFwOJx",
+        "Gaussian_Blur": "1lV5zB-MTrzZZCBD6iSrleBvba2vBit_6",
+        "Median_Blur": "1FG9S-WVVyqnIm462MAghOKY7RxBB9bU-",
+        "DnCNN": "1xXEEG7p2Z1jq9OHtTWawyh_Tb4YmGPX8",
+        "Centre": "1Q8qRWoy0n-O2jHsD3EwoZbJpJQYmaK-M",
+        "Non-centre": "1tzEE7EFeVNbO6mb8T11ukgc2bF1b1BAA",
+        "Random": "1F17I251SjVTawfvcKBiqscd15U5a0NhQ"
+    },
+    "KNN": {
+        "None": "1gvvPLddZc9uguTm3mCQrvwra0FI4CSVh",
+        "Restormer": "1ac9WhNUf91igkzRcE11GVXfHOq4JFSmV",
+        "Gaussian_Blur": "1wb5pZmPXD1HHxRMGYmd-JrGmTK0IMU67",
+        "Median_Blur": "16zE8guQEDfdbzzBdWGPj7xTbga4ZJya1",
+        "DnCNN": "1TGLaCcP2rmiiUZnoNHyUApsiuHnHEjBk",
+        "Centre": "1WD0DRDn6TUurQUyme7D3qrI9rRg8j99D",
+        "Non-centre": "1Da1QlDeR0G5EssFk6HUXOq2-dXAEGk5N",
+        "Random": "1IwHBREdNJROdkwv9t3quEe3OvHyKqcpj"
+    }
+}
+
 IMG_SIZE = 224
 torch_transform = transforms.Compose([
         transforms.Resize((IMG_SIZE, IMG_SIZE)),
@@ -75,6 +111,55 @@ def feature_extraction(model: torch.nn.Module, img: Image.Image):
         input_tensor = torch_transform(img).unsqueeze(0).to(device)
         features = feature_extractor(input_tensor).squeeze().cpu().numpy().flatten()
     return [features]
+
+def download_model(model: str, transform: str):
+    file_id = ML_MODELS_URLs[model][transform]
+    url = f"https://drive.google.com/uc?export=download&id={file_id}"
+    if transform in DENOISERS:
+        model_path = f"denoised_models/{model}_{transform}.pkl"
+        if os.path.exists(model_path):
+            return
+
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            with open(model_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        else:
+            raise Exception(f"Failed to download model({model_path}): {response.status_code}")
+        
+    else:
+        model_path = f"masking_models/{model}_{transform}.pkl"
+        if os.path.exists(model_path):
+            return 
+        
+        response = requests.get(url, stream=True)
+        if response.status_code == 200:
+            with open(model_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+        else:
+            raise Exception(f"Failed to download model({model_path}): {response.status_code}")
+        
+def load_ml_model(model: str, transform: str):
+    model = "RF" if model == "Random Forest" else model
+    if transform in DENOISERS:
+        model_path = f"denoised_models/{model}_{transform}.pkl"
+        if not os.path.exists(model_path):
+            download_model(model, transform)
+
+        with open(model_path, "rb") as f:
+            pred_model = pickle.load(f)
+        return pred_model
+        
+    else:
+        model_path = f"masking_models/{model}_{transform}.pkl"
+        if not os.path.exists(model_path):
+            download_model(model, transform)
+        
+        with open(model_path, "rb") as f:
+            pred_model = pickle.load(f)
+        return pred_model
 
 
 def get_transform(img: Image.Image, transform: str) -> Image.Image:
@@ -170,20 +255,21 @@ def predict(img: Image.Image, transform: str, model: str) -> tuple[str, int]:
     
     else: #traditional ML models
         features = feature_extraction(cnn_model, transformed_img)
-        if transform in DENOISERS:
-            if model == "Random Forest":
-                with open(f"denoised_models/RF_{transform}.pkl", "rb") as f:
-                    pred_model = pickle.load(f)
-            else:
-                with open(f"denoised_models/{model}_{transform}.pkl", "rb") as f:
-                    pred_model = pickle.load(f)
-        else:
-            if model == "Random Forest":
-                with open(f"masking_models/RF_{transform}.pkl", "rb") as f:
-                    pred_model = pickle.load(f)
-            else:
-                with open(f"masking_models/{model}_{transform}.pkl", "rb") as f:
-                    pred_model = pickle.load(f)
+        pred_model = load_ml_model(model, transform)
+        # if transform in DENOISERS:
+        #     if model == "Random Forest":
+        #         with open(f"denoised_models/RF_{transform}.pkl", "rb") as f:
+        #             pred_model = pickle.load(f)
+        #     else:
+        #         with open(f"denoised_models/{model}_{transform}.pkl", "rb") as f:
+        #             pred_model = pickle.load(f)
+        # else:
+        #     if model == "Random Forest":
+        #         with open(f"masking_models/RF_{transform}.pkl", "rb") as f:
+        #             pred_model = pickle.load(f)
+        #     else:
+        #         with open(f"masking_models/{model}_{transform}.pkl", "rb") as f:
+        #             pred_model = pickle.load(f)
         
 
         

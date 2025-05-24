@@ -1,3 +1,0 @@
-Cancer Likelihood: 32.37%
-Model Used: 
-Image Saved: result/2025-05-18_03-29-12_final_image.jpg

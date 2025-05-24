@@ -1,0 +1,3 @@
+Predicted type: Immune Cell
+Confidence: 5575.54%
+Processed at: 2025-05-24_05-11-00 (Sydney Time)

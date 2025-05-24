@@ -138,7 +138,7 @@ def get_heatmap(img: Image.Image, transform: str) -> tuple[Image.Image, Image.Im
 
     return Image.fromarray(cv2.cvtColor(overlay, cv2.COLOR_BGR2RGB)), Image.fromarray(cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB))
 
-def predict(img: Image.Image, transform: str, model: str) -> tuple[Image.Image, Image.Image, str, int]:
+def predict(img: Image.Image, transform: str, model: str) -> tuple[str, int]:
     """
     Predict the class of the image and generate a heatmap.
 
